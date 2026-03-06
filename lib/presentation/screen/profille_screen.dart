@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/args/UserArg.dart';
 
 class ProfileScreen extends StatelessWidget {
-  final String username;
-  const ProfileScreen({super.key, required this.username});
+  final UserArg args;
+  const ProfileScreen({super.key, required this.args});
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +12,7 @@ class ProfileScreen extends StatelessWidget {
         title: const Text('Profile'),
       ),
       body: Center(
-        child: Text('Username: $username'),
+        child: Text('Username: ${args.username}'),
       ),
     );
   }

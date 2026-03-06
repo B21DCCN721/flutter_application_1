@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/args/UserArg.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,8 +29,12 @@ class _LoginScreenState extends State<LoginScreen> {
               children: <Widget>[
                 TextFormField(
                   controller: _usernameController,
-                  decoration:
-                      const InputDecoration(hintText: 'Enter your username'),
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your username',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
+                  ),
                   validator: (String? value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter some text';
@@ -37,9 +42,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
                 TextFormField(
-                  decoration:
-                      const InputDecoration(hintText: 'Enter your password'),
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your password',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
+                  ),
                   validator: (String? value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter some text';
@@ -53,7 +63,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         Navigator.pushReplacementNamed(context, '/home',
-                            arguments: _usernameController.text);
+                            arguments:
+                                UserArg(username: _usernameController.text));
                       }
                     },
                     child: const Text('Submit'),
