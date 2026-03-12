@@ -9,9 +9,7 @@ class PokemonApi {
     try {
       final response = await http.get(Uri.parse(Env.pokeUrl));
       final data = jsonDecode(response.body);
-      return (data['results'] as List)
-          .map((e) => Pokemon(name: e['name'], url: e['url']))
-          .toList();
+      return (data['results'] as List).map((e) => Pokemon.fromJson(e)).toList();
     } catch (e) {
       throw Exception('Failed to load pokemon: $e');
     }
@@ -22,17 +20,18 @@ class PokemonApi {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final name = data['name'];
-        final weight = data['weight'];
-        final height = data['height'];
-        final img = data['sprites']['front_default'];
-        final baseExp = data['base_experience'];
-        return DetailPokemon(
-            name: name,
-            weight: weight,
-            height: height,
-            img: img,
-            baseExp: baseExp);
+        // final name = data['name'];
+        // final weight = data['weight'];
+        // final height = data['height'];
+        // final img = data['sprites']['front_default'];
+        // final baseExp = data['base_experience'];
+        // return DetailPokemon(
+        //     name: name,
+        //     weight: weight,
+        //     height: height,
+        //     img: img,
+        //     baseExp: baseExp);
+        return DetailPokemon.fromJson(data);
       } else {
         throw Exception(
             'Failed to load detail pokemon: ${response.statusCode}');

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/data/DetailPokemon.dart';
 import 'package:flutter_application_1/models/data/Pokemon.dart';
 import 'package:flutter_application_1/service/pokemon_api.dart';
+import 'package:flutter_application_1/widgets/error.dart';
 import 'package:flutter_application_1/widgets/pokemon_card.dart';
 
 class PokemonScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class _PokemonScreenState extends State<PokemonScreen> {
   List<Pokemon>? _allPokemon;
   List<Pokemon>? _pokemon;
   final TextEditingController searchText = TextEditingController();
+  bool _error = false;
 
   @override
   void initState() {
@@ -31,6 +33,9 @@ class _PokemonScreenState extends State<PokemonScreen> {
       });
     } catch (e) {
       print(e);
+      setState(() {
+        _error = true;
+      });
     }
   }
 
@@ -46,12 +51,18 @@ class _PokemonScreenState extends State<PokemonScreen> {
 
   void _handleSearch() {
     final search = searchText.text;
-    final filteredPokemon = _allPokemon!.where((pokemon) {
-      return pokemon.name.toLowerCase().contains(search.toLowerCase());
-    }).toList();
-    setState(() {
-      _pokemon = filteredPokemon;
-    });
+    if (_allPokemon != null) {
+      final filteredPokemon = _allPokemon!.where((pokemon) {
+        return pokemon.name.toLowerCase().contains(search.toLowerCase());
+      }).toList();
+      setState(() {
+        _pokemon = filteredPokemon;
+      });
+    } else {
+      setState(() {
+        _pokemon = [];
+      });
+    }
   }
 
   @override
@@ -61,35 +72,37 @@ class _PokemonScreenState extends State<PokemonScreen> {
           title: const Text('Pokemon'),
           automaticallyImplyLeading: false,
         ),
-        body: _pokemon == null
-            ? const Center(child: CircularProgressIndicator())
-            : Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: searchText,
-                      onChanged: (value) => _handleSearch(),
-                      decoration: const InputDecoration(
-                        hintText: 'Tìm kiếm',
-                        suffixIcon: Icon(Icons.search),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 16,
-                    ),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: _pokemon!.length,
-                        itemBuilder: (context, index) {
-                          return PokemonCard(
-                            pokemon: _pokemon![index],
-                            getDetailPokemon: _getDataDetailPokemon,
-                          );
-                        },
-                      ),
-                    )
-                  ],
-                )));
+        body: _error
+            ? const Error()
+            : _pokemon == null
+                ? const Center(child: CircularProgressIndicator())
+                : Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: searchText,
+                          onChanged: (value) => _handleSearch(),
+                          decoration: const InputDecoration(
+                            hintText: 'Tìm kiếm',
+                            suffixIcon: Icon(Icons.search),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 16,
+                        ),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: _pokemon!.length,
+                            itemBuilder: (context, index) {
+                              return PokemonCard(
+                                pokemon: _pokemon![index],
+                                getDetailPokemon: _getDataDetailPokemon,
+                              );
+                            },
+                          ),
+                        )
+                      ],
+                    )));
   }
 }
