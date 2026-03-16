@@ -1,5 +1,6 @@
 class DoTestArg {
+  final int courseId;
   final int quizId;
-  final int attemptId;
-  DoTestArg({required this.quizId, required this.attemptId});
+  final int cmid;
+  DoTestArg({required this.quizId, required this.cmid, required this.courseId});
 }

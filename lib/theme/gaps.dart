@@ -18,6 +18,7 @@ class Gaps {
   static const Widget vGap32 = SizedBox(height: 32);
   static const Widget vGap36 = SizedBox(height: 36);
   static const Widget vGap40 = SizedBox(height: 40);
+  static const Widget vGap80 = SizedBox(height: 80);
 
   static const EdgeInsets paddingHorizontal =
       EdgeInsets.only(left: 16, right: 16);

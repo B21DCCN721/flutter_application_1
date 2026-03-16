@@ -16,7 +16,16 @@ class _ResultScreenState extends State<ResultScreen> {
   bool _isLoading = true;
   String _selectedStatus = "";
   String _selectedCondition = "";
-  List<Map<String, dynamic>> resResult = [];
+  List<Map<String, dynamic>> _allResults = [];
+  List<Map<String, dynamic>> _filteredResults = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -24,13 +33,17 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   void _getResult() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
       final res = await ResultApi.resultCourse(
         status: _selectedStatus,
         condition: _selectedCondition,
       );
       setState(() {
-        resResult = List<Map<String, dynamic>>.from(res);
+        _allResults = List<Map<String, dynamic>>.from(res);
+        _filterResults();
       });
     } catch (e) {
       logger("Error fetching results: $e");
@@ -39,6 +52,17 @@ class _ResultScreenState extends State<ResultScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  void _filterResults() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredResults = _allResults.where((item) {
+        final subject = (item["ten_mon"] ?? "").toString().toLowerCase();
+        final status = (item["trang_thai"] ?? "").toString().toLowerCase();
+        return subject.contains(query) || status.contains(query);
+      }).toList();
+    });
   }
 
   @override
@@ -101,6 +125,8 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
               Gaps.vGap8,
               TextField(
+                controller: _searchController,
+                onChanged: (_) => _filterResults(),
                 decoration: InputDecoration(
                   hintText: "Nhập từ khóa",
                   hintStyle: const TextStyle(color: AppColors.gray),
@@ -114,6 +140,15 @@ class _ResultScreenState extends State<ResultScreen> {
                     borderRadius: BorderRadius.circular(12),
                     borderSide: const BorderSide(color: AppColors.border),
                   ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            _filterResults();
+                          },
+                        )
+                      : null,
                 ),
               ),
               Gaps.vGap16,
@@ -246,18 +281,21 @@ class _ResultScreenState extends State<ResultScreen> {
         Expanded(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : resResult.isEmpty
+              : _filteredResults.isEmpty
                   ? const Center(child: Text("Không có dữ liệu"))
                   : ListView.separated(
-                      itemCount: resResult.length,
+                      itemCount: _filteredResults.length,
                       separatorBuilder: (context, index) => const Divider(
                         height: 1,
                         color: AppColors.border,
                       ),
                       itemBuilder: (context, index) {
-                        final item = resResult[index];
+                        final item = _filteredResults[index];
                         return ResultItem(
                           item: {
+                            "id":
+                                (item["courseid"] ?? item["id"])?.toString() ??
+                                    "",
                             "subject": item["ten_mon"]?.toString() ?? "",
                             "status": item["trang_thai"]?.toString() ?? "",
                             "startDate": item["ngay_bat_dau"]?.toString() ?? "",

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/args/do_file.dart';
+import 'package:flutter_application_1/models/args/forum_detail.dart';
 import 'package:flutter_application_1/models/args/quiz_detail.dart';
 import 'package:flutter_application_1/presentation/router/index.dart';
+import 'package:flutter_application_1/models/args/search.dart';
+
 import 'package:flutter_application_1/service/subject_api.dart';
 import 'package:flutter_application_1/service/task_api.dart';
 import 'package:flutter_application_1/theme/colors.dart';
@@ -9,6 +13,9 @@ import 'package:flutter_application_1/utils/format_timestamp.dart';
 import 'package:flutter_application_1/utils/logger.dart';
 import 'package:flutter_application_1/widgets/task_card.dart';
 import 'package:flutter_application_1/widgets/filter_button.dart';
+import 'package:flutter_application_1/service/course_api.dart';
+import 'package:flutter_application_1/models/args/media_viewer.dart';
+import 'package:flutter_application_1/utils/toast.dart';
 
 class LearningTaskScreen extends StatefulWidget {
   const LearningTaskScreen({super.key});
@@ -36,11 +43,48 @@ class _LearningTaskScreenState extends State<LearningTaskScreen> {
       {required String cmid,
       required String modName,
       required String courseId,
-      required String instance}) {
-    if (modName == "quiz") {
-      Navigator.pushNamed(context, AppRouter.quizDetail,
-          arguments:
-              QuizDetailArg(cmid: cmid, courseId: courseId, quizId: instance));
+      required String instance,
+      String title = ""}) async {
+    switch (modName) {
+      case "quiz":
+        Navigator.pushNamed(context, AppRouter.quizDetail,
+            arguments: QuizDetailArg(
+                cmid: cmid, courseId: courseId, quizId: instance));
+        break;
+      case "forum":
+        Navigator.pushNamed(context, AppRouter.forumDetail,
+            arguments: ForumDetailArg(forumId: instance));
+        break;
+      case "assign":
+        Navigator.pushNamed(context, AppRouter.doFile,
+            arguments:
+                DoFileArg(cmid: cmid, courseId: courseId, assignId: instance));
+        break;
+      case "url":
+      case "hvp":
+        try {
+          final res = await CourseApi.detailCourseModule(cmid: cmid);
+          if (res['success'] == true &&
+              res['data'] != null &&
+              res['data']['externalurl'] != null &&
+              (res['data']['externalurl'] as List).isNotEmpty) {
+            final String externalUrl = res['data']['externalurl'][0];
+            if (context.mounted) {
+              Navigator.pushNamed(
+                context,
+                AppRouter.webview,
+                arguments: MediaViewerArg(url: externalUrl, title: title),
+              );
+            }
+          } else {
+            Toast.show("Không tìm thấy link bài học");
+          }
+        } catch (e) {
+          Toast.show("Đã có lỗi xảy ra");
+        }
+        break;
+      default:
+        break;
     }
   }
 
@@ -58,8 +102,8 @@ class _LearningTaskScreenState extends State<LearningTaskScreen> {
               "subject": task['coursename'] ?? "No Subject",
               "status":
                   task['state'] == 0 ? "Chưa hoàn thành" : "Đã hoàn thành",
-              "deadline": task['deadline'] != null
-                  ? formatTimestamp(task['deadline'])
+              "deadline": (task['deadline'] != null && task['deadline'] > 0)
+                  ? formatTimestamp(task['deadline'], showTime: true)
                   : null,
               "cmid": task['cmid']?.toString() ?? "",
               "modname": task['modname']?.toString() ?? "",
@@ -134,9 +178,10 @@ class _LearningTaskScreenState extends State<LearningTaskScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    IconButton(
+                     IconButton(
                         onPressed: () {
-                          print("Search");
+                          Navigator.pushNamed(context, AppRouter.search,
+                              arguments: SearchArg(type: SearchType.task));
                         },
                         icon: const Icon(Icons.search, color: Colors.grey)),
                   ],
@@ -272,6 +317,7 @@ class _LearningTaskScreenState extends State<LearningTaskScreen> {
                               modName: task['modname'] ?? "",
                               courseId: task['courseid'] ?? "",
                               instance: task['instance'] ?? "",
+                              title: task['title'] ?? "",
                             ),
                           );
                         },

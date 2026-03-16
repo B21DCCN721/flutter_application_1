@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/theme/colors.dart';
 import 'package:flutter_application_1/theme/gaps.dart';
+import 'package:flutter_application_1/presentation/router/index.dart';
+import 'package:flutter_application_1/models/args/result_detail.dart';
 
 class ResultItem extends StatefulWidget {
   final Map<String, String> item;
@@ -83,7 +85,14 @@ class _ResultItemState extends State<ResultItem> {
                 Gaps.vGap16,
                 InkWell(
                   onTap: () {
-                    // Navigate to detail
+                    Navigator.pushNamed(
+                      context,
+                      AppRouter.resultDetail,
+                      arguments: ResultDetailArg(
+                        courseId: widget.item["id"]!,
+                        courseName: widget.item["subject"]!,
+                      ),
+                    );
                   },
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

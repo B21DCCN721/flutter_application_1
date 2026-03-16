@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/presentation/router/index.dart';
+import 'package:flutter_application_1/models/args/search.dart';
+
 import 'package:flutter_application_1/service/course_api.dart';
 import 'package:flutter_application_1/theme/colors.dart';
 import 'package:flutter_application_1/theme/gaps.dart';
@@ -100,7 +102,8 @@ class _CourseScreenState extends State<CourseScreen>
                     ),
                     IconButton(
                         onPressed: () {
-                          print("Search");
+                          Navigator.pushNamed(context, AppRouter.search,
+                              arguments: SearchArg(type: SearchType.course));
                         },
                         icon: const Icon(Icons.search, color: Colors.grey)),
                   ],

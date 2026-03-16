@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/args/do_file.dart';
+import 'package:flutter_application_1/models/args/forum_detail.dart';
+import 'package:flutter_application_1/models/args/hd72_list.dart';
 import 'package:flutter_application_1/models/args/quiz_detail.dart';
+import 'package:flutter_application_1/models/args/media_viewer.dart';
 import 'package:flutter_application_1/presentation/router/index.dart';
 import 'package:flutter_application_1/service/course_api.dart';
 import 'package:flutter_application_1/service/task_api.dart';
@@ -8,7 +12,10 @@ import 'package:flutter_application_1/theme/gaps.dart';
 import 'package:flutter_application_1/utils/format_timestamp.dart';
 import 'package:flutter_application_1/utils/get_course_description.dart';
 import 'package:flutter_application_1/utils/image_from_network.dart';
+import 'package:flutter_application_1/constants/env.dart';
+import 'package:flutter_application_1/utils/local_storage.dart';
 import 'package:flutter_application_1/utils/logger.dart';
+import 'package:flutter_application_1/utils/toast.dart';
 import 'package:flutter_application_1/widgets/lesson_item.dart';
 import 'package:flutter_application_1/widgets/course_task_item.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -30,6 +37,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   List<Map<String, dynamic>> tasks = [];
   dynamic resCourse;
   final tabs = ["Tổng quan", "Bài học", "Nhiệm vụ"];
+
   Widget _buildTab() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -94,8 +102,20 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         Align(
           alignment: Alignment.centerLeft,
           child: OutlinedButton(
-            onPressed: () {
-              print('abc');
+            onPressed: () async {
+              if (resCourse != null && resCourse['course']['slburl'] != null) {
+                String url = resCourse['course']['slburl'];
+                String token = await LocalStorage.getString(Env.token);
+                String authedUrl = Env.selfAuthPage(token, url);
+                Navigator.pushNamed(
+                  context,
+                  AppRouter.webview,
+                  arguments: MediaViewerArg(
+                    url: authedUrl,
+                    title: 'Kế hoạch học tập',
+                  ),
+                );
+              }
             },
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -199,7 +219,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     }
 
     final sections = resCourse['section'] as List;
-    // Bỏ qua section General (index 0) theo yêu cầu
     final lessonSections = sections.skip(1).toList();
 
     return ListView.builder(
@@ -209,7 +228,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       itemCount: lessonSections.length,
       itemBuilder: (context, index) {
         final section = lessonSections[index];
-        return LessonSectionItem(section: section);
+        return LessonSectionItem(section: section, courseId: widget.id);
       },
     );
   }
@@ -230,6 +249,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             modName: task['modname'] ?? "",
             courseId: task['courseid'] ?? "",
             instance: task['instance'] ?? "",
+            title: task['title'] ?? "",
           ),
         );
       },
@@ -296,7 +316,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               "status":
                   task['state'] == 0 ? "Chưa hoàn thành" : "Đã hoàn thành",
               "deadline": (task['deadline'] != null && task['deadline'] > 0)
-                  ? formatTimestamp(task['deadline'])
+                  ? formatTimestamp(task['deadline'], showTime: true)
                   : null,
               "cmid": task['cmid']?.toString() ?? "",
               "modname": task['modname']?.toString() ?? "",
@@ -319,11 +339,51 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       {required String cmid,
       required String modName,
       required String courseId,
-      required String instance}) {
-    if (modName == "quiz") {
-      Navigator.pushNamed(context, AppRouter.quizDetail,
-          arguments:
-              QuizDetailArg(cmid: cmid, courseId: courseId, quizId: instance));
+      required String instance,
+      String title = ""}) async {
+    switch (modName) {
+      case "quiz":
+        Navigator.pushNamed(context, AppRouter.quizDetail,
+            arguments: QuizDetailArg(
+                cmid: cmid, courseId: courseId, quizId: instance));
+        break;
+      case "forum":
+        Navigator.pushNamed(context, AppRouter.forumDetail,
+            arguments: ForumDetailArg(forumId: instance));
+        break;
+      case "hd72":
+        Navigator.pushNamed(context, AppRouter.hd72List,
+            arguments: Hd72ListArg(courseId: courseId));
+        break;
+      case "assign":
+        Navigator.pushNamed(context, AppRouter.doFile,
+            arguments:
+                DoFileArg(cmid: cmid, assignId: instance, courseId: courseId));
+        break;
+      case "url":
+        try {
+          final res = await CourseApi.detailCourseModule(cmid: cmid);
+          if (res['success'] == true &&
+              res['data'] != null &&
+              res['data']['externalurl'] != null &&
+              (res['data']['externalurl'] as List).isNotEmpty) {
+            final String externalUrl = res['data']['externalurl'][0];
+            if (context.mounted) {
+              Navigator.pushNamed(
+                context,
+                AppRouter.webview,
+                arguments: MediaViewerArg(url: externalUrl, title: title),
+              );
+            }
+          } else {
+            Toast.show("Không tìm thấy link bài học");
+          }
+        } catch (e) {
+          Toast.show("Đã có lỗi xảy ra");
+        }
+        break;
+      default:
+        break;
     }
   }
 

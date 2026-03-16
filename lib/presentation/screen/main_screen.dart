@@ -17,12 +17,12 @@ class _MainScreenState extends State<MainScreen> {
   final PageController _pageController = PageController();
 
   List<Widget> get _screens => [
-    HomeScreen(onTabChange: _onItemTapped),
-    const CourseScreen(),
-    const LearningTaskScreen(),
-    const ResultScreen(),
-    const Center(child: Text("Thông báo")),
-  ];
+        HomeScreen(onTabChange: _onItemTapped),
+        const CourseScreen(),
+        const LearningTaskScreen(),
+        const ResultScreen(),
+        const Center(child: Text("Thông báo")),
+      ];
 
   void _onItemTapped(int index) {
     setState(() {

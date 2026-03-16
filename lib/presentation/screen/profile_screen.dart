@@ -3,6 +3,8 @@ import 'package:flutter_application_1/service/auth_api.dart';
 import 'package:flutter_application_1/theme/colors.dart';
 import 'package:flutter_application_1/theme/gaps.dart';
 import 'package:flutter_application_1/utils/logger.dart';
+import 'package:flutter_application_1/presentation/router/index.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -210,7 +212,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                  context, AppRouter.changePassword);
+                            },
+
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFF5F5F7),
                               foregroundColor: Colors.black,

@@ -51,4 +51,20 @@ class AuthApi {
     logger("Call api get user $url");
     return jsonDecode(response.body);
   }
+
+  static Future updatePasswordFromOld(
+      {required String password,
+      required String newPassword,
+      required String confirmNewPassword}) async {
+    String url = "${Env.domain}/webservice/rest/server.php";
+    Map params = <String, dynamic>{};
+    params['password'] = password;
+    params['newpassword'] = newPassword;
+    params['confirm_newpassword'] = confirmNewPassword;
+    params['moodlewsrestformat'] = 'json';
+    params['wsfunction'] = 'local_core_reset_password';
+    final response = await ApiClient.post(url, body: params);
+    logger("AuthAPI::updatePasswordFromOld $url");
+    return jsonDecode(response.body);
+  }
 }

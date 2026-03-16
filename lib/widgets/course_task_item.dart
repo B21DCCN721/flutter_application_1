@@ -41,7 +41,7 @@ class CourseTaskItem extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    task['title'] ?? "",
+                    "${task['modname']} - ${task['title']}",
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

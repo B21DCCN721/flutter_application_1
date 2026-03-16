@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/constants/env.dart';
 import 'package:flutter_application_1/presentation/router/index.dart';
 import 'package:flutter_application_1/service/auth_api.dart';
 import 'package:flutter_application_1/theme/colors.dart';
 import 'package:flutter_application_1/theme/gaps.dart';
+import 'package:flutter_application_1/utils/local_storage.dart';
 import 'package:flutter_application_1/utils/logger.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -27,6 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _getUser() async {
     try {
       final response = await AuthApi.user();
+      await LocalStorage.putString(
+          Env.userId, response['data']?['userid']?.toString() ?? "");
       if (mounted) {
         setState(() {
           name = response['data']?['fullname'] ?? "";

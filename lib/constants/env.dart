@@ -10,6 +10,13 @@ class Env {
   static String token = "token";
   static String keyword = "keyword";
   static String usernameForGGA = "Chưa đăng nhập";
+  static String userId = "userId";
 
   static String localQuizzes = "localQuizzes";
+  static String selfAuthPage(String token, String url) {
+    if (url.contains("?")) {
+      return "$url&token=$token";
+    }
+    return "$url?token=$token";
+  }
 }

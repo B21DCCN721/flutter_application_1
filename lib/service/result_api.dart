@@ -20,4 +20,14 @@ class ResultApi {
     logger("ResultAPI:resultCourse $url");
     return jsonDecode(response.body);
   }
+
+  static Future resultDetail({required String courseId}) async {
+    String url = "${Env.domain}/webservice/rest/server.php";
+    url = "$url?wsfunction=local_core_get_user_grade_detail_by_course";
+    url = "$url&courseid=$courseId";
+    url = "$url&moodlewsrestformat=json";
+    final response = await ApiClient.get(url);
+    logger("ResultAPI:resultDetail $url");
+    return jsonDecode(response.body);
+  }
 }

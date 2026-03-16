@@ -7,6 +7,8 @@ import 'package:flutter_application_1/theme/gaps.dart';
 import 'package:flutter_application_1/utils/format_timestamp.dart';
 import 'package:flutter_application_1/utils/logger.dart';
 import 'package:flutter_application_1/widgets/quiz_attempt_card.dart';
+import 'package:flutter_application_1/presentation/router/index.dart';
+import 'package:flutter_application_1/models/args/do_test.dart';
 
 class QuizDetailScreen extends StatefulWidget {
   final QuizDetailArg arg;
@@ -267,6 +269,17 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
   }
 
   Widget _buildBottomButton() {
+    bool isOverdue = false;
+    if (resModule != null && resModule['data'] != null) {
+      final timeClose = resModule['data']['timeclose'];
+      if (timeClose != null && timeClose != 0) {
+        final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+        if (now > timeClose) {
+          isOverdue = true;
+        }
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -281,11 +294,19 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
       ),
       child: SafeArea(
         child: ElevatedButton(
-          onPressed: () {
-            // TODO: Start attempt
+          onPressed: isOverdue ? null : () {
+            Navigator.pushNamed(
+              context,
+              AppRouter.doTest,
+              arguments: DoTestArg(
+                quizId: int.parse(widget.arg.quizId),
+                cmid: int.parse(widget.arg.cmid),
+                courseId: int.parse(widget.arg.courseId),
+              ),
+            );
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
+            backgroundColor: isOverdue ? Colors.grey : AppColors.primary,
             foregroundColor: AppColors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
