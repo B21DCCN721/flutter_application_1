@@ -3,6 +3,7 @@ import 'package:flutter_application_1/models/args/do_file.dart';
 import 'package:flutter_application_1/service/assign_api.dart';
 import 'package:flutter_application_1/service/course_api.dart';
 import 'package:flutter_application_1/theme/colors.dart';
+import 'package:flutter_application_1/widgets/course_content_sheet.dart';
 import 'package:flutter_application_1/theme/gaps.dart';
 import 'package:flutter_application_1/utils/format_timestamp.dart';
 import 'package:flutter_application_1/utils/logger.dart';
@@ -26,6 +27,7 @@ class _DoFileScreenState extends State<DoFileScreen> {
   bool _isLoading = true;
   dynamic _moduleData;
   dynamic _gradeData;
+  dynamic _courseData;
   List<PlatformFile> _selectedFiles = [];
   List<int> _deleteFileIds = [];
   bool _isNotAllowed = false;
@@ -63,8 +65,11 @@ class _DoFileScreenState extends State<DoFileScreen> {
         });
       }
 
+      final res3 = await CourseApi.detailCourse(courseId: widget.arg.courseId);
+
       setState(() {
         _gradeData = res2;
+        _courseData = res3;
       });
     } catch (e) {
       logger("DoFileScreen:_fetchData Error: $e");
@@ -82,14 +87,20 @@ class _DoFileScreenState extends State<DoFileScreen> {
       List<String>? allowedExtensions;
       FileType fileType = FileType.any;
 
-      if (_gradeData != null && _gradeData['filetype'] != null && _gradeData['filetype'] is List) {
+      if (_gradeData != null &&
+          _gradeData['filetype'] != null &&
+          _gradeData['filetype'] is List) {
         List<dynamic> rawTypes = _gradeData['filetype'];
         if (rawTypes.isNotEmpty) {
           allowedExtensions = rawTypes
-              .map((e) => e.toString().replaceAll(RegExp(r'^\.+'), '').toLowerCase().trim())
+              .map((e) => e
+                  .toString()
+                  .replaceAll(RegExp(r'^\.+'), '')
+                  .toLowerCase()
+                  .trim())
               .where((e) => e.isNotEmpty && e != '*')
               .toList();
-              
+
           if (allowedExtensions.isNotEmpty) {
             fileType = FileType.custom;
           } else {
@@ -102,6 +113,7 @@ class _DoFileScreenState extends State<DoFileScreen> {
         allowMultiple: true,
         type: fileType,
         allowedExtensions: allowedExtensions,
+        allowCompression: false,
       );
 
       if (result != null) {
@@ -174,7 +186,7 @@ class _DoFileScreenState extends State<DoFileScreen> {
 
     try {
       String token = await LocalStorage.getString(Env.token);
-      
+
       if (_deleteFileIds.isNotEmpty) {
         int confirm = _gradeData?['lastattempt']?['graded'] ?? 0;
         for (int fileId in _deleteFileIds) {
@@ -200,7 +212,9 @@ class _DoFileScreenState extends State<DoFileScreen> {
             itemid: itemId,
           );
 
-          if (uploadResponse != null && uploadResponse is List && uploadResponse.isNotEmpty) {
+          if (uploadResponse != null &&
+              uploadResponse is List &&
+              uploadResponse.isNotEmpty) {
             // Lấy itemId từ lần upload file đầu tiên để dùng cho các file tiếp theo
             itemId = "${uploadResponse[0]['itemid']}";
           } else {
@@ -240,6 +254,15 @@ class _DoFileScreenState extends State<DoFileScreen> {
     }
   }
 
+  void _showCourseSections() {
+    CourseContentSheet.show(
+      context,
+      courseData: _courseData,
+      courseId: widget.arg.courseId,
+      currentCmid: widget.arg.cmid,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -248,8 +271,6 @@ class _DoFileScreenState extends State<DoFileScreen> {
         body: Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }
-
-
 
     final data = _moduleData;
     final int now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
@@ -280,7 +301,10 @@ class _DoFileScreenState extends State<DoFileScreen> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          leading: const Icon(Icons.menu, color: Colors.white),
+          leading: IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: _showCourseSections,
+          ),
           title: Text(
             name,
             style: const TextStyle(color: Colors.white, fontSize: 18),
@@ -422,7 +446,9 @@ class _DoFileScreenState extends State<DoFileScreen> {
 
   Widget _buildSubmissionFiles(bool isExpired) {
     final rawServerFiles = _gradeData?['lastattempt']?['files'] as List? ?? [];
-    final serverFiles = rawServerFiles.where((file) => !_deleteFileIds.contains(file['fileid'])).toList();
+    final serverFiles = rawServerFiles
+        .where((file) => !_deleteFileIds.contains(file['fileid']))
+        .toList();
 
     if (serverFiles.isEmpty && _selectedFiles.isEmpty) {
       return const Center(
@@ -467,7 +493,8 @@ class _DoFileScreenState extends State<DoFileScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.download, color: AppColors.primary),
+                      icon:
+                          const Icon(Icons.download, color: AppColors.primary),
                       onPressed: () => _downloadFile(file['fileurl']),
                     ),
                     if (!isExpired)

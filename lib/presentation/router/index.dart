@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/args/do_file.dart';
 import 'package:flutter_application_1/models/args/do_test.dart';
+import 'package:flutter_application_1/models/args/do_test_result.dart';
 import 'package:flutter_application_1/models/args/forum_detail.dart';
 import 'package:flutter_application_1/models/args/hd72_list.dart';
 import 'package:flutter_application_1/models/args/hd72_question_detail.dart';
@@ -8,11 +9,13 @@ import 'package:flutter_application_1/models/args/quiz_detail.dart';
 import 'package:flutter_application_1/presentation/screen/course_detail_screen.dart';
 import 'package:flutter_application_1/presentation/screen/course_screen.dart';
 import 'package:flutter_application_1/presentation/screen/do_file_screen.dart';
-import 'package:flutter_application_1/presentation/screen/do_quiz_screen.dart';
 import 'package:flutter_application_1/presentation/screen/do_test_screen.dart';
+import 'package:flutter_application_1/presentation/screen/do_test_result_screen.dart';
 import 'package:flutter_application_1/presentation/screen/error_screen.dart';
 import 'package:flutter_application_1/presentation/screen/hd72_question_detail_screen.dart';
 import 'package:flutter_application_1/presentation/screen/pdf_viewer_screen.dart';
+import 'package:flutter_application_1/presentation/screen/do_test_result_detail_screen.dart';
+import 'package:flutter_application_1/models/args/do_test_result_detail.dart';
 import 'package:flutter_application_1/presentation/screen/webview_screen.dart';
 import 'package:flutter_application_1/models/args/media_viewer.dart';
 import 'package:flutter_application_1/presentation/screen/learning_task_screen.dart';
@@ -41,7 +44,6 @@ import 'package:flutter_application_1/models/args/search.dart';
 
 import 'package:flutter_application_1/presentation/screen/search_screen.dart';
 
-
 class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
@@ -69,13 +71,14 @@ class AppRouter {
   static const String hd72QuestionDetail = '/hd72-question-detail';
   static const String doFile = '/do-file';
   static const String doTest = '/do-test';
+  static const String doTestResult = '/do-test-result';
+  static const String doTestResultDetail = '/do-test-result-detail';
   static const String webview = '/webview';
   static const String videoPlayer = '/video-player';
   static const String pdfViewer = '/pdf-viewer';
   static const String hd72CreateQuestion = '/hd72-create-question';
   static const String hd72AddQuestion = '/hd72-add-question';
   static const String search = '/search';
-
 
   static MaterialPageRoute generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -111,8 +114,6 @@ class AppRouter {
       case quizDetail:
         final arg = settings.arguments as QuizDetailArg;
         return MaterialPageRoute(builder: (_) => QuizDetailScreen(arg: arg));
-      case doQuiz:
-        return MaterialPageRoute(builder: (_) => const DoQuizScreen());
       case changePassword:
         return MaterialPageRoute(
             builder: (_) => const ChangePasswordInAppScreen());
@@ -144,6 +145,13 @@ class AppRouter {
       case doTest:
         final arg = settings.arguments as DoTestArg;
         return MaterialPageRoute(builder: (_) => DoTestScreen(arg: arg));
+      case doTestResult:
+        final arg = settings.arguments as DoTestResultArg;
+        return MaterialPageRoute(builder: (_) => DoTestResultScreen(arg: arg));
+      case doTestResultDetail:
+        final arg = settings.arguments as DoTestResultDetailArg;
+        return MaterialPageRoute(
+            builder: (_) => DoTestResultDetailScreen(arg: arg));
       case webview:
         final arg = settings.arguments as MediaViewerArg;
         return MaterialPageRoute(builder: (_) => WebviewScreen(arg: arg));
@@ -156,13 +164,12 @@ class AppRouter {
             builder: (_) => Hd72CreateQuestionScreen(arg: arg));
       case hd72AddQuestion:
         final arg = settings.arguments as Hd72CreateQuestionArg;
-        return MaterialPageRoute(builder: (_) => Hd72AddQuestionScreen(arg: arg));
+        return MaterialPageRoute(
+            builder: (_) => Hd72AddQuestionScreen(arg: arg));
       case search:
-
         final arg = settings.arguments as SearchArg;
         return MaterialPageRoute(builder: (_) => SearchScreen(arg: arg));
       default:
-
         return MaterialPageRoute(builder: (_) => const LoginScreen());
     }
   }

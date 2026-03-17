@@ -67,4 +67,14 @@ class AuthApi {
     logger("AuthAPI::updatePasswordFromOld $url");
     return jsonDecode(response.body);
   }
+
+  static Future updateAvatar({required String itemId}) async {
+    String url = "${Env.domain}/webservice/rest/server.php";
+    url = "$url?wsfunction=core_user_update_picture";
+    url = "$url&draftitemid=$itemId";
+    url = "$url&moodlewsrestformat=json";
+    final response = await ApiClient.get(url);
+    logger("AuthAPI::updateAvatar $url");
+    return jsonDecode(response.body);
+  }
 }

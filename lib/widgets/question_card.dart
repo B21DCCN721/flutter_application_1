@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 
 class Question {
   final int id;
+  final int slot;
+  final int uniqueId;
   final String text;
   final List<String> options;
 
   Question({
     required this.id,
+    required this.slot,
+    required this.uniqueId,
     required this.text,
     required this.options,
   });
@@ -47,13 +52,21 @@ class QuestionCard extends StatelessWidget {
                 fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
           ),
           const SizedBox(height: 8),
-          Text(
-            question.text,
-            style: const TextStyle(
+          Html(
+            data: question.text,
+            style: {
+              "body": Style(
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: FontSize(16),
                 color: Colors.black,
-                height: 1.5),
+                margin: Margins.zero,
+                padding: HtmlPaddings.zero,
+              ),
+              "p": Style(
+                margin: Margins.zero,
+                padding: HtmlPaddings.zero,
+              ),
+            },
           ),
           const SizedBox(height: 16),
           ...List.generate(question.options.length, (optIndex) {

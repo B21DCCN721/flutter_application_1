@@ -17,6 +17,7 @@ class OverviewScreen extends StatefulWidget {
 class _OverviewScreenState extends State<OverviewScreen> {
   bool _isLoading = true;
   String name = "";
+  bool _hasUpdated = false;
 
   void _handleLogout() async {
     setState(() {
@@ -87,14 +88,29 @@ class _OverviewScreenState extends State<OverviewScreen> {
       appBar: AppBar(
         title: const Text("Hồ sơ"),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context, _hasUpdated),
+        ),
       ),
-      body: SafeArea(
+      body: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, Object? result) {
+          if (didPop) return;
+          Navigator.pop(context, _hasUpdated);
+        },
+        child: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
               InkWell(
-                onTap: () {
-                  Navigator.pushNamed(context, AppRouter.profile);
+                onTap: () async {
+                  final result =
+                      await Navigator.pushNamed(context, AppRouter.profile);
+                  if (result == true) {
+                    _getUser();
+                    _hasUpdated = true;
+                  }
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
@@ -278,6 +294,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

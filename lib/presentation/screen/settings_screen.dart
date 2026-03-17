@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/theme/colors.dart';
 import 'package:flutter_application_1/theme/gaps.dart';
+import 'package:flutter_application_1/utils/toast.dart';
+import 'package:flutter_application_1/utils/config.dart';
+import 'package:flutter_application_1/utils/local_storage.dart';
+import 'package:flutter_application_1/constants/env.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -11,127 +15,188 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   double _fontSize = 1.0;
+  bool _isLoggedIn = false;
+  bool _useBiometric = false;
+  bool _readText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  void _loadSettings() async {
+    String token = await LocalStorage.getString(Env.token);
+    setState(() {
+      _fontSize = AppConfig.fontSizeFactor.value;
+      _isLoggedIn = token.isNotEmpty;
+      _useBiometric =
+          LocalStorage.getBool('use_biometric', defaultValue: false);
+      _readText = LocalStorage.getBool('read_text', defaultValue: false);
+    });
+  }
+
+  void _saveSettings() async {
+    AppConfig.updateFontSize(_fontSize);
+    if (_isLoggedIn) {
+      await LocalStorage.putBool('use_biometric', _useBiometric);
+      await LocalStorage.putBool('read_text', _readText);
+    }
+    Toast.show("Đã lưu cài đặt");
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.grayBg,
-      appBar: AppBar(
-        title: const Text(
-          'Cài đặt',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.5,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back),
-        ),
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: TextScaler.linear(_fontSize),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Cài đặt cơ bản",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-            Gaps.vGap12,
-            _buildSettingItem(
-              title: "Cỡ chữ",
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        if (_fontSize > 0.5) _fontSize -= 0.1;
-                      });
-                    },
-                    icon: const Icon(Icons.remove, color: Colors.redAccent),
-                  ),
-                  Text(
-                    _fontSize.toStringAsFixed(1),
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _fontSize += 0.1;
-                      });
-                    },
-                    icon: const Icon(Icons.add, color: Colors.green),
-                  ),
-                ],
-              ),
-            ),
-            _buildSettingItem(
-              title: "Xóa bộ nhớ đệm",
-              trailing: _buildIconButton(
-                Icons.delete_rounded,
-                Colors.red.withOpacity(0.1),
-                Colors.red,
-              ),
-            ),
-            _buildSettingItem(
-              title: "Cấp quyền cho ứng dụng",
-              trailing: _buildIconButton(
-                Icons.settings_rounded,
-                AppColors.primary.withOpacity(0.1),
-                AppColors.primary,
-              ),
-            ),
-            Gaps.vGap12,
-            const Text(
-              "Cài đặt nâng cao",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-            Gaps.vGap12,
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                "Cần đăng nhập để mở cài đặt nâng cao.",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.primary, fontSize: 16),
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        color: AppColors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 48),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            elevation: 0,
+      child: Scaffold(
+        backgroundColor: AppColors.grayBg,
+        appBar: AppBar(
+          title: const Text(
+            'Cài đặt',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
           ),
-          child: const Text(
-            'Lưu cài đặt',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+          centerTitle: true,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0.5,
+          leading: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back),
+          ),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Cài đặt cơ bản",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+              Gaps.vGap12,
+              _buildSettingItem(
+                title: "Cỡ chữ",
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_fontSize > 0.5) _fontSize -= 0.1;
+                        });
+                      },
+                      icon: const Icon(Icons.remove, color: Colors.redAccent),
+                    ),
+                    Text(
+                      _fontSize.toStringAsFixed(1),
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _fontSize += 0.1;
+                        });
+                      },
+                      icon: const Icon(Icons.add, color: Colors.green),
+                    ),
+                  ],
+                ),
+              ),
+              _buildSettingItem(
+                title: "Xóa bộ nhớ đệm",
+                trailing: _buildIconButton(
+                  Icons.delete_rounded,
+                  Colors.red.withOpacity(0.1),
+                  Colors.red,
+                ),
+              ),
+              _buildSettingItem(
+                title: "Cấp quyền cho ứng dụng",
+                trailing: _buildIconButton(
+                  Icons.settings_rounded,
+                  AppColors.primary.withOpacity(0.1),
+                  AppColors.primary,
+                ),
+              ),
+              Gaps.vGap12,
+              const Text(
+                "Cài đặt nâng cao",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+              Gaps.vGap12,
+              if (!_isLoggedIn)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    "Cần đăng nhập để mở cài đặt nâng cao.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.primary, fontSize: 16),
+                  ),
+                )
+              else ...[
+                _buildSettingItem(
+                  title: "Đăng nhập sử dụng sinh trắc học",
+                  trailing: Switch(
+                    value: _useBiometric,
+                    activeColor: AppColors.primary,
+                    onChanged: (value) {
+                      setState(() {
+                        _useBiometric = value;
+                      });
+                    },
+                  ),
+                ),
+                _buildSettingItem(
+                  title: "Đọc văn bản",
+                  trailing: Switch(
+                    value: _readText,
+                    activeColor: AppColors.primary,
+                    onChanged: (value) {
+                      setState(() {
+                        _readText = value;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        bottomNavigationBar: Container(
+          color: AppColors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: ElevatedButton(
+            onPressed: _saveSettings,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Lưu cài đặt',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+            ),
           ),
         ),
       ),
@@ -152,7 +217,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             title,
             style: const TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textDark),
           ),

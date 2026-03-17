@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/constants/env.dart';
+import 'package:flutter_application_1/service/report_api.dart';
 import 'package:flutter_application_1/theme/colors.dart';
 import 'package:flutter_application_1/theme/gaps.dart';
+import 'package:flutter_application_1/utils/local_storage.dart';
+import 'package:flutter_application_1/utils/toast.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -11,6 +17,62 @@ class ReportScreen extends StatefulWidget {
 
 class _ReportScreenState extends State<ReportScreen> {
   final TextEditingController _contentController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
+  List<File?> _selectedImages = [null, null, null];
+  bool _isSubmitting = false;
+
+  Future<void> _pickImage(ImageSource source, int index) async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        imageQuality: 70,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedImages[index] = File(image.path);
+        });
+      }
+    } catch (e) {
+      Toast.show("Không thể chọn ảnh: $e");
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages[index] = null;
+    });
+  }
+
+  Future<void> _submitFeedback() async {
+    final content = _contentController.text.trim();
+    if (content.isEmpty) {
+      Toast.show("Vui lòng nhập nội dung góp ý");
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final token = await LocalStorage.getString(Env.token);
+      final res = await ReportAPI.submitFeedback(
+        token: token,
+        content: content,
+        file1: _selectedImages[0]?.path ?? "",
+        file2: _selectedImages[1]?.path ?? "",
+        file3: _selectedImages[2]?.path ?? "",
+      );
+
+      if (res) {
+        Toast.show("Gửi góp ý thành công!");
+        if (mounted) Navigator.pop(context);
+      }
+    } catch (e) {
+      Toast.show("Đã có lỗi xảy ra: $e");
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -18,7 +80,7 @@ class _ReportScreenState extends State<ReportScreen> {
     super.dispose();
   }
 
-  void _showImagePicker(BuildContext context) {
+  void _showImagePicker(BuildContext context, int index) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -45,7 +107,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   label: "Chụp ảnh",
                   onTap: () {
                     Navigator.pop(context);
-                    // Add logic to take photo
+                    _pickImage(ImageSource.camera, index);
                   },
                 ),
                 Gaps.vGap12,
@@ -56,7 +118,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   label: "Chọn ảnh có sẵn",
                   onTap: () {
                     Navigator.pop(context);
-                    // Add logic to pick from gallery
+                    _pickImage(ImageSource.gallery, index);
                   },
                 ),
               ],
@@ -96,6 +158,9 @@ class _ReportScreenState extends State<ReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_selectedImages.length < 3) {
+      _selectedImages = [null, null, null];
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -164,12 +229,11 @@ class _ReportScreenState extends State<ReportScreen> {
                   ),
                   Gaps.vGap8,
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildImagePickerSlot(),
-                      Gaps.hGap12,
-                      _buildImagePickerSlot(),
-                      Gaps.hGap12,
-                      _buildImagePickerSlot(),
+                      _buildImageSlot(0),
+                      _buildImageSlot(1),
+                      _buildImageSlot(2),
                     ],
                   ),
                 ],
@@ -180,9 +244,7 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: ElevatedButton(
-                onPressed: () {
-                  // Submit feedback logic
-                },
+                onPressed: _isSubmitting ? null : _submitFeedback,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -192,13 +254,22 @@ class _ReportScreenState extends State<ReportScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  "Gửi góp ý",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        "Gửi góp ý",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
               ),
             ),
           ),
@@ -207,15 +278,55 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  Widget _buildImagePickerSlot() {
+  Widget _buildImageSlot(int index) {
+    final file = _selectedImages[index];
+    if (file != null) {
+      return Stack(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+              image: DecorationImage(
+                image: FileImage(file),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          Positioned(
+            top: -4,
+            right: -4,
+            child: GestureDetector(
+              onTap: () => _removeImage(index),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  size: 14,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return GestureDetector(
-      onTap: () => _showImagePicker(context),
+      onTap: () => _showImagePicker(context, index),
       child: Container(
         width: 100,
         height: 100,
         decoration: BoxDecoration(
           color: const Color(0xFFEEEEEE),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
         ),
         child: const Icon(
           Icons.add_photo_alternate_rounded,

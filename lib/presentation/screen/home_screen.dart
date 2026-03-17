@@ -19,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   String name = "";
+  String avatarUrl = "";
 
   @override
   void initState() {
@@ -34,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           name = response['data']?['fullname'] ?? "";
+          avatarUrl = response['data']?['userpictureurl'] ?? "";
         });
       }
     } catch (e) {
@@ -83,13 +85,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       IconButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, AppRouter.overview);
+                        onPressed: () async {
+                          final result = await Navigator.pushNamed(
+                              context, AppRouter.overview);
+                          if (result == true) {
+                            _getUser();
+                          }
                         },
-                        icon: const CircleAvatar(
+                        icon: CircleAvatar(
                           radius: 24,
                           backgroundColor: Colors.white24,
-                          child: Icon(Icons.person, color: Colors.white),
+                          backgroundImage: avatarUrl.isNotEmpty
+                              ? NetworkImage(avatarUrl)
+                              : null,
+                          child: avatarUrl.isEmpty
+                              ? const Icon(Icons.person, color: Colors.white)
+                              : null,
                         ),
                       ),
                       Gaps.hGap8,

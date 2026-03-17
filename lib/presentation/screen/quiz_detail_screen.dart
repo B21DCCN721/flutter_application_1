@@ -9,6 +9,7 @@ import 'package:flutter_application_1/utils/logger.dart';
 import 'package:flutter_application_1/widgets/quiz_attempt_card.dart';
 import 'package:flutter_application_1/presentation/router/index.dart';
 import 'package:flutter_application_1/models/args/do_test.dart';
+import 'package:flutter_application_1/models/args/do_test_result.dart';
 
 class QuizDetailScreen extends StatefulWidget {
   final QuizDetailArg arg;
@@ -31,7 +32,7 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
 
   String _stripHtml(String htmlString) {
     RegExp exp = RegExp(r"<[^>]*>", multiLine: true, caseSensitive: true);
-    return htmlString.replaceAll(exp, '').replaceAll('&nbsp;', ' ').trim();
+    return htmlString.replaceAll(exp, '').replaceAll('&nbsp;', ' ');
   }
 
   String _formatTimeSpent(int seconds) {
@@ -176,8 +177,32 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
                       timeSpent: _formatTimeSpent(finish - start),
                       date: _formatDateTime(start),
                       isCompleted: attempt['state'] == 'finished',
-                      onTap: () {
-                        // TODO: Review or continue attempt
+                      onTap: () async {
+                        if (attempt['state'] == 'inprogress' ||
+                            attempt['state'] == 'overdue') {
+                          Navigator.pushReplacementNamed(
+                            context,
+                            AppRouter.doTest,
+                            arguments: DoTestArg(
+                              quizId: int.parse(widget.arg.quizId),
+                              cmid: int.parse(widget.arg.cmid),
+                              courseId: int.parse(widget.arg.courseId),
+                              courseName: resModule['data']['name'] ?? "",
+                            ),
+                          );
+                        } else if (attempt['state'] == 'finished') {
+                          Navigator.pushNamed(
+                            context,
+                            AppRouter.doTestResult,
+                            arguments: DoTestResultArg(
+                              attemptId: attempt['id'],
+                              courseName: resModule['data']['name'] ?? "",
+                              cmid: int.parse(widget.arg.cmid),
+                              quizId: int.parse(widget.arg.quizId),
+                              courseId: int.parse(widget.arg.courseId),
+                            ),
+                          );
+                        }
                       },
                     );
                   }).toList(),
@@ -280,6 +305,14 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
       }
     }
 
+    // Check for in-progress or overdue attempts
+    bool hasActiveAttempt = false;
+    if (resHistoryQuiz != null && resHistoryQuiz['attempts'] != null) {
+      final attempts = resHistoryQuiz['attempts'] as List;
+      hasActiveAttempt = attempts.any(
+          (a) => a['state'] == 'inprogress' || a['state'] == 'overdue');
+    }
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -294,17 +327,20 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
       ),
       child: SafeArea(
         child: ElevatedButton(
-          onPressed: isOverdue ? null : () {
-            Navigator.pushNamed(
-              context,
-              AppRouter.doTest,
-              arguments: DoTestArg(
-                quizId: int.parse(widget.arg.quizId),
-                cmid: int.parse(widget.arg.cmid),
-                courseId: int.parse(widget.arg.courseId),
-              ),
-            );
-          },
+          onPressed: isOverdue
+              ? null
+              : () {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    AppRouter.doTest,
+                    arguments: DoTestArg(
+                      quizId: int.parse(widget.arg.quizId),
+                      cmid: int.parse(widget.arg.cmid),
+                      courseId: int.parse(widget.arg.courseId),
+                      courseName: resModule['data']['name'] ?? "",
+                    ),
+                  );
+                },
           style: ElevatedButton.styleFrom(
             backgroundColor: isOverdue ? Colors.grey : AppColors.primary,
             foregroundColor: AppColors.white,
@@ -314,9 +350,9 @@ class _QuizDetailScreenState extends State<QuizDetailScreen> {
             ),
             minimumSize: const Size(double.infinity, 50),
           ),
-          child: const Text(
-            "Tiếp tục làm bài",
-            style: TextStyle(
+          child: Text(
+            hasActiveAttempt ? "Tiếp tục làm bài" : "Bắt đầu làm bài",
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),

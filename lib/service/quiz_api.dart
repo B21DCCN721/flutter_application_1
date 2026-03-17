@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_application_1/constants/env.dart';
 import 'package:flutter_application_1/utils/http_client.dart';
@@ -59,6 +60,46 @@ class QuizApi {
     }
     final response = await ApiClient.get(url);
     logger("QuizAPI:startQuiz $url");
+    return jsonDecode(response.body);
+  }
+
+  static Future submitQuiz(
+      {required int attemptId,
+      required List data,
+      String password = ""}) async {
+    String url = "${Env.domain}/webservice/rest/server.php";
+    url = "$url?wsfunction=mod_quiz_process_attempt";
+    url = "$url&moodlewsrestformat=json";
+    url = "$url&attemptid=$attemptId";
+    if (password.isNotEmpty) {
+      url = "$url&preflightdata[0][name]=quizpassword";
+      url = "$url&preflightdata[0][value]=$password";
+    }
+    url = "$url&finishattempt=1";
+    Map<dynamic, dynamic> dataBody = {};
+    for (var i = 0; i < data.length; i++) {
+      dataBody["data[$i][name]"] = "${data[i]['name']}";
+      dataBody["data[$i][value]"] = "${data[i]['value']}";
+    }
+    logger("dataBody");
+    logger(dataBody);
+    final response = await ApiClient.post(url,
+        headers: {
+          HttpHeaders.contentTypeHeader: 'application/x-www-form-urlencoded',
+        },
+        body: dataBody,
+        encoding: Encoding.getByName('utf-8'));
+    logger("QuizAPI:submitQuiz $url");
+    return jsonDecode(response.body);
+  }
+
+  static Future historyAttempt({required int attemptId}) async {
+    String url = "${Env.domain}/webservice/rest/server.php";
+    url = "$url?wsfunction=local_quiz_get_attempt_review";
+    url = "$url&moodlewsrestformat=json";
+    url = "$url&attemptid=$attemptId";
+    final response = await ApiClient.get(url);
+    logger("QuizAPI:historyAttempt $url");
     return jsonDecode(response.body);
   }
 }

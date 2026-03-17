@@ -45,6 +45,7 @@ dependencies:
   syncfusion_flutter_pdfviewer: ^24.2.9
   webview_flutter: ^4.8.0
   mime: ^1.0.4
+  image_picker: ^1.0.2
 
 dev_dependencies:
   flutter_test:
